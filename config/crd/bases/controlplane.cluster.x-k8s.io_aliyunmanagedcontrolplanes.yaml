@@ -128,6 +128,8 @@ spec:
                 type: object
               network:
                 properties:
+                  customSan:
+                    type: string
                   natGateway:
                     type: boolean
                   podCIDR:

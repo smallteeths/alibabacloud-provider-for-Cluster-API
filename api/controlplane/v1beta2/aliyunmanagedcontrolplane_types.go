@@ -59,6 +59,7 @@ type AliyunManagedControlPlaneSpecNetwork struct {
 	VSwitches     commonapi.VSwitches                        `json:"vSwitches,omitempty"`
 	PodCIDR       string                                     `json:"podCIDR,omitempty"`       // todo: 新增
 	ServiceCIDR   string                                     `json:"serviceCIDR,omitempty"`   // 必填, 点分十进制IP, 带掩码(如 172.16.0.0/16)
+	CustomSan     string                                     `json:"customSan,omitempty"`     // 用于 apiserver 的证书 SAN
 	NatGateway    bool                                       `json:"natGateway,omitempty"`    //
 	SecurityGroup AliyunManagedControlPlaneSpecSecurityGroup `json:"securityGroup,omitempty"` //
 }

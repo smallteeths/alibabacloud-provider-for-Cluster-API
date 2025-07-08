@@ -294,6 +294,7 @@ func (r *AliyunManagedControlPlaneReconciler) reconcileManagedKubernetes(
 					ServiceCidr:      &aliyunControlPlane.Spec.Network.ServiceCIDR,
 					PodCidr:          &aliyunControlPlane.Spec.Network.PodCIDR,
 					NewNATGateway:    &aliyunControlPlane.Spec.Network.NatGateway,
+					CustomSan:        &aliyunControlPlane.Spec.Network.CustomSan,
 					WorkerVswitchIds: vswitchIDs,
 					SecurityGroupID:  &aliyunControlPlane.Spec.Network.SecurityGroup.ID,
 

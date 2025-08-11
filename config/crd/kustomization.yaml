@@ -5,6 +5,14 @@ resources:
 - bases/infrastructure.cluster.x-k8s.io_aliyunmanagedclusters.yaml
 - bases/controlplane.cluster.x-k8s.io_aliyunmanagedcontrolplanes.yaml
 - bases/infrastructure.cluster.x-k8s.io_aliyunmanagedmachinepools.yaml
+- bases/alibabacloud.alibabacloud.com_providerconfigs.yaml
+- bases/alibabacloud.alibabacloud.com_providerconfigusages.yaml
+- bases/alibabacloud.alibabacloud.com_storeconfigs.yaml
+- bases/cs.alibabacloud.com_kubernetesnodepools.yaml
+- bases/cs.alibabacloud.com_managedkubernetes.yaml
+- bases/cs.alibabacloud.com_vpcs.yaml
+- bases/cs.alibabacloud.com_vswitches.yaml
+- bases/infrastructure.cluster.x-k8s.io_aliyunmachinepools.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patches:

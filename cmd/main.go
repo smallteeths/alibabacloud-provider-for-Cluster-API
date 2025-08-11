@@ -58,6 +58,8 @@ import (
 	managedkubernetescontroller "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/cs/managedkubernetes"
 	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/cs/vpc"
 	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/cs/vswitch"
+	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/ess/scalingconfiguration"
+	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/ess/scalinggroup"
 	providerconfigcontroller "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/providerconfig"
 	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/features"
 
@@ -273,6 +275,13 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	if err := (&infrastructurecontroller.AliyunMachinePoolReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AliyunMachinePool")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	// upjet
@@ -361,7 +370,16 @@ func main() {
 		providerLog.Info("failed to setup providerconfig controller", "error", err)
 		os.Exit(1)
 	}
-
+	// 同步 upjet scalinggroup controller
+	if err := scalinggroup.Setup(mgr, o); err != nil {
+		providerLog.Info("failed to setup kubernetesnodepool controller", "error", err)
+		os.Exit(1)
+	}
+	// 同步 upjet scalingconfiguration controller
+	if err := scalingconfiguration.Setup(mgr, o); err != nil {
+		providerLog.Info("failed to setup kubernetesnodepool controller", "error", err)
+		os.Exit(1)
+	}
 	// upjet end
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

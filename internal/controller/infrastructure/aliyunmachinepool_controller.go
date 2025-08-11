@@ -31,8 +31,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	clusterv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	capiexputil "sigs.k8s.io/cluster-api/exp/util"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	controllerutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"
@@ -56,7 +59,6 @@ type AliyunMachinePoolReconciler struct {
 }
 
 const (
-	// 也可以把 region 放到 mp.Spec.Region；这里先用注解简单接入
 	RegionAnnotation = "alibabacloud.alibabacloud.com/region"
 )
 
@@ -92,6 +94,20 @@ func (r *AliyunMachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	log = log.WithValues("AliyunMachinePool", mp.Name)
+
+	if _, err := r.syncUserData(ctx, mp); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if !mp.ObjectMeta.DeletionTimestamp.IsZero() {
+		return r.reconcileDelete(ctx, log, mp)
+	}
+
+	if controllerutil.AddFinalizer(mp, infrastructurev1beta2.AliyunMachinePoolFinalizer) {
+		if err := r.Client.Update(ctx, mp); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
 
 	pc, err := r.reconcileProviderConfig(ctx, log, mp)
 	if err != nil {
@@ -388,6 +404,83 @@ func (r *AliyunMachinePoolReconciler) reconcileScalingConfiguration(
 		log.Info("Updated ESS ScalingConfiguration", "name", cur.Name)
 	}
 	return ctrl.Result{}, nil
+}
+
+func (r *AliyunMachinePoolReconciler) reconcileDelete(
+	ctx context.Context,
+	log logr.Logger,
+	mp *infrastructurev1beta2.AliyunMachinePool,
+) (ctrl.Result, error) {
+	sgName := fmt.Sprintf("%s-%s", mp.Name, strings.ToLower(string(mp.UID))[:8])
+	scName := fmt.Sprintf("%s-sc-%s", mp.Name, strings.ToLower(string(mp.UID))[:8])
+
+	sc := &essv1alpha1.ScalingConfiguration{}
+	if err := r.Client.Get(ctx, client.ObjectKey{Name: scName}, sc); err == nil {
+		// 删除 sg config
+		if err := r.Client.Delete(ctx, sc); err != nil {
+			return ctrl.Result{}, err
+		}
+	} else if !apierrors.IsNotFound(err) {
+		return ctrl.Result{}, err
+	}
+
+	sg := &essv1alpha1.ScalingGroup{}
+	if err := r.Client.Get(ctx, client.ObjectKey{Name: sgName}, sg); err == nil {
+		// 删除 sg
+		if err := r.Client.Delete(ctx, sg); err != nil {
+			return ctrl.Result{}, err
+		}
+	} else if !apierrors.IsNotFound(err) {
+		return ctrl.Result{}, err
+	}
+
+	controllerutil.RemoveFinalizer(mp, infrastructurev1beta2.AliyunMachinePoolFinalizer)
+	if err := r.Client.Update(ctx, mp); err != nil {
+		return ctrl.Result{}, err
+	}
+	log.Info("AliyunMachinePool delete complete")
+	return ctrl.Result{}, nil
+}
+
+// getMachinePool returns the CAPI MachinePool owning the AliyunMachinePool using
+// owner references or, as a fallback, labels.
+func (r *AliyunMachinePoolReconciler) getMachinePool(ctx context.Context, mp *infrastructurev1beta2.AliyunMachinePool) (*clusterv1.MachinePool, error) {
+	for _, ref := range mp.OwnerReferences {
+		if ref.Kind == "MachinePool" && ref.APIVersion == clusterv1.GroupVersion.String() {
+			m := &clusterv1.MachinePool{}
+			if err := r.Client.Get(ctx, types.NamespacedName{Namespace: mp.Namespace, Name: ref.Name}, m); err != nil {
+				return nil, err
+			}
+			return m, nil
+		}
+	}
+	return capiexputil.GetMachinePoolByLabels(ctx, r.Client, mp.Namespace, mp.Labels)
+}
+
+// syncUserData reads bootstrap data from the MachinePool secret and writes it
+// into the AliyunMachinePool's ScalingConfiguration. It returns true if
+// UserData was changed.
+func (r *AliyunMachinePoolReconciler) syncUserData(ctx context.Context, mp *infrastructurev1beta2.AliyunMachinePool) (bool, error) {
+	machinePool, err := r.getMachinePool(ctx, mp)
+	if err != nil {
+		return false, err
+	}
+	if machinePool == nil || machinePool.Spec.Template.Spec.Bootstrap.DataSecretName == nil {
+		return false, fmt.Errorf("bootstrap data secret name not found")
+	}
+	secret := &corev1.Secret{}
+	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: mp.Namespace, Name: *machinePool.Spec.Template.Spec.Bootstrap.DataSecretName}, secret); err != nil {
+		return false, err
+	}
+	userData := string(secret.Data["value"])
+	if mp.Spec.ScalingConfiguration.UserData != userData {
+		mp.Spec.ScalingConfiguration.UserData = userData
+		if err := r.Client.Update(ctx, mp); err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+	return false, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

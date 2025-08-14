@@ -24,6 +24,8 @@ import (
 	essv1alpha1 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/ess/v1alpha1"
 	infrastructurev1beta2 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/infrastructure/v1beta2"
 	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/clients"
+	ess20220222 "github.com/alibabacloud-go/ess-20220222/v2/client"
+	"github.com/alibabacloud-go/tea/tea"
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -31,14 +33,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterexpv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	capiexputil "sigs.k8s.io/cluster-api/exp/util"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	controllerutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"
+	"time"
 )
 
 type CredentialSecret struct {
@@ -132,6 +137,59 @@ func (r *AliyunMachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 	if _, err := r.reconcileScalingConfiguration(ctx, mp, pc.Name, *curSG.Status.AtProvider.ID); err != nil {
 		return ctrl.Result{}, err
+	}
+
+	scName := fmt.Sprintf("%s-sc-%s", mp.Name, strings.ToLower(string(mp.UID))[:8])
+	sc := &essv1alpha1.ScalingConfiguration{}
+	if err := r.Client.Get(ctx, client.ObjectKey{Name: scName}, sc); err != nil {
+		return ctrl.Result{}, err
+	}
+	if sc.Status.AtProvider.ID == nil {
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
+
+	region := mp.Annotations[RegionAnnotation]
+	if region == "" {
+		region = r.CredentialSecret.Region
+	}
+	sdkClient, err := clients.CreateSDKClient(region)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	describeScalingInstancesRequest := &ess20220222.DescribeScalingInstancesRequest{ScalingGroupId: tea.String(*curSG.Status.AtProvider.ID)}
+	describeScalingInstancesResp, err := sdkClient.DescribeScalingInstances(describeScalingInstancesRequest)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	instances := describeScalingInstancesResp.Body.ScalingInstances
+	replicas, readyReplicas, err := calcReplicas(instances)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	mp.Status.ScalingGroupID = *curSG.Status.AtProvider.ID
+	mp.Status.ScalingConfigurationID = tea.StringValue(sc.Status.AtProvider.ID)
+	mp.Status.Replicas = replicas
+	mp.Status.ReadyReplicas = readyReplicas
+
+	conditions.MarkTrue(mp, infrastructurev1beta2.ScalingConfigurationReadyCondition)
+	if replicas == readyReplicas {
+		conditions.MarkTrue(mp, infrastructurev1beta2.ScalingConfigurationInstanceReadyCondition)
+		if err := r.Client.Status().Update(ctx, mp); err != nil {
+			return ctrl.Result{}, err
+		}
+	} else {
+		conditions.MarkFalse(
+			mp,
+			infrastructurev1beta2.ScalingConfigurationInstanceReadyCondition,
+			"",
+			clusterv1.ConditionSeverityInfo,
+			"waiting for nodes",
+		)
+		if err := r.Client.Status().Update(ctx, mp); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 
 	return ctrl.Result{}, nil
@@ -232,6 +290,11 @@ func (r *AliyunMachinePoolReconciler) reconcileProviderConfig(
 	if region == "" {
 		return nil, fmt.Errorf("region not set: add annotation %q or configure Reconciler.CredentialSecret.Region", RegionAnnotation)
 	}
+
+	// 在注册 upjet provider 时配置 accessKey 和 SecretKey
+	clients.AliyunCreds.AccessKey = r.CredentialSecret.AccessKey
+	clients.AliyunCreds.SecretKey = r.CredentialSecret.SecretKey
+	clients.AliyunCreds.Region = region
 
 	// Secret 名约定为: aliyun-<region>，放在 r.CredentialSecret.Namespace
 	secretKey := types.NamespacedName{
@@ -362,6 +425,8 @@ func (r *AliyunMachinePoolReconciler) reconcileScalingConfiguration(
 				InternetChargeType:      mp.Spec.ScalingConfiguration.InternetChargeType,
 				InternetMaxBandwidthIn:  mp.Spec.ScalingConfiguration.InternetMaxBandwidthIn,
 				InternetMaxBandwidthOut: mp.Spec.ScalingConfiguration.InternetMaxBandwidthOut,
+				SystemDiskCategory:      mp.Spec.ScalingConfiguration.SystemDiskCategory,
+				SystemDiskSize:          mp.Spec.ScalingConfiguration.SystemDiskSize,
 			},
 		},
 	}
@@ -444,10 +509,10 @@ func (r *AliyunMachinePoolReconciler) reconcileDelete(
 
 // getMachinePool returns the CAPI MachinePool owning the AliyunMachinePool using
 // owner references or, as a fallback, labels.
-func (r *AliyunMachinePoolReconciler) getMachinePool(ctx context.Context, mp *infrastructurev1beta2.AliyunMachinePool) (*clusterv1.MachinePool, error) {
+func (r *AliyunMachinePoolReconciler) getMachinePool(ctx context.Context, mp *infrastructurev1beta2.AliyunMachinePool) (*clusterexpv1.MachinePool, error) {
 	for _, ref := range mp.OwnerReferences {
-		if ref.Kind == "MachinePool" && ref.APIVersion == clusterv1.GroupVersion.String() {
-			m := &clusterv1.MachinePool{}
+		if ref.Kind == "MachinePool" && ref.APIVersion == clusterexpv1.GroupVersion.String() {
+			m := &clusterexpv1.MachinePool{}
 			if err := r.Client.Get(ctx, types.NamespacedName{Namespace: mp.Namespace, Name: ref.Name}, m); err != nil {
 				return nil, err
 			}

@@ -52,6 +52,7 @@ import (
 	alibabacloudv1alpha1 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/alibabacloud/v1alpha1"
 	alibabacloudv1beta1 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/alibabacloud/v1beta1"
 	csv1alpha1 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/cs/v1alpha1"
+	essv1alpha1 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/ess/v1alpha1"
 	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/clients"
 	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/config"
 	kubernetesnodepoolcontroller "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/cs/kubernetesnodepool"
@@ -84,6 +85,7 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 
 	utilruntime.Must(csv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(essv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(alibabacloudv1alpha1.SchemeBuilder.AddToScheme(scheme))
 	utilruntime.Must(alibabacloudv1beta1.SchemeBuilder.AddToScheme(scheme))
 	utilruntime.Must(clusterv1.AddToScheme(scheme))

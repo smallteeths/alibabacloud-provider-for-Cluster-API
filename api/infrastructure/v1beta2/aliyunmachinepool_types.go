@@ -18,6 +18,7 @@ package v1beta2
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -47,8 +48,20 @@ type AliyunMachinePoolSpec struct {
 
 // AliyunMachinePoolStatus defines the observed state of AliyunMachinePool.
 type AliyunMachinePoolStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// ScalingGroupID is the ID of the underlying ESS ScalingGroup.
+	ScalingGroupID string `json:"scalingGroupID,omitempty"`
+
+	// ScalingConfigurationID is the ID of the ESS ScalingConfiguration used by the ScalingGroup.
+	ScalingConfigurationID string `json:"scalingConfigurationID,omitempty"`
+
+	// Replicas is the total number of instances in the ScalingGroup.
+	Replicas int32 `json:"replicas,omitempty"`
+
+	// ReadyReplicas is the number of replicas that are ready and have a corresponding Kubernetes NodeReady condition.
+	ReadyReplicas int32 `json:"readyReplicas,omitempty"`
+
+	// Conditions defines current service state of the AliyunMachinePool.
+	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -86,7 +99,7 @@ type AliyunScalingConfigurationSpec struct {
 	ScalingGroupID string `json:"scalingGroupId,omitempty"`
 	// +kubebuilder:validation:Required
 	ImageID string `json:"imageId"`
-	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MinItems=1
 	InstanceTypes []string `json:"instanceTypes"`
 	// +kubebuilder:validation:MinItems=1
 	SecurityGroupIDs []string `json:"securityGroupIds"`
@@ -102,6 +115,8 @@ type AliyunScalingConfigurationSpec struct {
 	// +kubebuilder:validation:Optional
 	InternetMaxBandwidthOut *float64 `json:"internetMaxBandwidthOut,omitempty"`
 	// … 如果需要，还可以加更多字段，如 RAM Role、磁盘配置 …
+	SystemDiskCategory *string  `json:"systemDiskCategory,omitempty"`
+	SystemDiskSize     *float64 `json:"systemDiskSize,omitempty"`
 }
 
 // 伸缩组字段

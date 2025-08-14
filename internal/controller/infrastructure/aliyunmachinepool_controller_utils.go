@@ -17,6 +17,7 @@ package infrastructure
 
 import (
 	essv1alpha1 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/ess/v1alpha1"
+	ess20220222 "github.com/alibabacloud-go/ess-20220222/v2/client"
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
@@ -147,4 +148,19 @@ func equalScalingConfigurationParamsSliceAware(a, b essv1alpha1.ScalingConfigura
 		return false
 	}
 	return true
+}
+
+func calcReplicas(instances []*ess20220222.DescribeScalingInstancesResponseBodyScalingInstances) (int32, int32, error) {
+	replicas := int32(len(instances))
+	ready := int32(0)
+	for _, inst := range instances {
+		if inst.HealthStatus == nil || *inst.HealthStatus != "Healthy" {
+			continue
+		}
+		if inst.InstanceId == nil {
+			continue
+		}
+		ready++
+	}
+	return replicas, ready, nil
 }

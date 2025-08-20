@@ -1,0 +1,18 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: capi-aggregate-aliyun-infra
+  labels:
+    cluster.x-k8s.io/aggregate-to-manager: "true"
+rules:
+  - apiGroups: ["infrastructure.cluster.x-k8s.io"]
+    resources:
+      - aliyunmachinetemplates
+      - aliyunmachinetemplates/status
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["infrastructure.cluster.x-k8s.io"]
+    resources:
+      - aliyunmachines
+      - aliyunmachines/status
+      - aliyunmachines/finalizers
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]

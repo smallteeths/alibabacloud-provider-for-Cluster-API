@@ -10,9 +10,9 @@ import "github.com/crossplane/upjet/pkg/config"
 // provider.
 var ExternalNameConfigs = map[string]config.ExternalName{
 	// Import requires using a randomly generated ID from provider: nl-2e21sda
-	"alicloud_instance":       config.IdentifierFromProvider,
-	"alicloud_security_group": config.IdentifierFromProvider,
-	"alicloud_key_pair":       config.IdentifierFromProvider,
+	"alicloud_nlb_load_balancer": config.IdentifierFromProvider,
+	"alicloud_nlb_server_group":  config.IdentifierFromProvider,
+	"alicloud_nlb_listener":      config.IdentifierFromProvider,
 }
 
 // ExternalNameConfigurations applies all external name configs listed in the

@@ -290,26 +290,6 @@ rules:
   - patch
   - update
 - apiGroups:
-  - ecs.alibabacloud.crossplane.io
-  resources:
-  - instances
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ecs.alibabacloud.crossplane.io
-  resources:
-  - instances/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
   - aliyunmachinepools
@@ -357,6 +337,32 @@ rules:
   - infrastructure.cluster.x-k8s.io
   resources:
   - aliyunmachines/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - aliyunmachinetemplates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - aliyunmachinetemplates/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - aliyunmachinetemplates/status
   verbs:
   - get
   - patch

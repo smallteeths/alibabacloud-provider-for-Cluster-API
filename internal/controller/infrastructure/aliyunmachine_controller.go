@@ -46,6 +46,10 @@ const (
 //+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=aliyunmachines/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=aliyunmachines/finalizers,verbs=update
 
+//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=aliyunmachinetemplates,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=aliyunmachinetemplates/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=aliyunmachinetemplates/finalizers,verbs=update
+
 //+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machines,verbs=get;list;watch
 
 type AliyunMachineReconciler struct {

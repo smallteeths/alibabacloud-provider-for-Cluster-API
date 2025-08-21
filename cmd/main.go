@@ -72,9 +72,6 @@ import (
 	infrastructurev1beta2 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/infrastructure/v1beta2"
 	controlplanecontroller "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/controlplane"
 	infrastructurecontroller "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/infrastructure"
-
-	infrastructurev1beta2 "cluster-api-provider-aliyun/api/infrastructure/v1beta2"
-	infrastructurecontroller "cluster-api-provider-aliyun/internal/controller/infrastructure"
 	//+kubebuilder:scaffold:imports
 )
 

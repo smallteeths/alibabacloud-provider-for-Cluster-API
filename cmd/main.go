@@ -72,6 +72,9 @@ import (
 	infrastructurev1beta2 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/infrastructure/v1beta2"
 	controlplanecontroller "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/controlplane"
 	infrastructurecontroller "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/infrastructure"
+
+	infrastructurev1beta2 "cluster-api-provider-aliyun/api/infrastructure/v1beta2"
+	infrastructurecontroller "cluster-api-provider-aliyun/internal/controller/infrastructure"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -287,6 +290,13 @@ func main() {
 		Client:           mgr.GetClient(),
 		Scheme:           mgr.GetScheme(),
 		CredentialSecret: credentialSecret,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AliyunCluster")
+		os.Exit(1)
+	}
+	if err := (&infrastructurecontroller.AliyunClusterReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AliyunCluster")
 		os.Exit(1)

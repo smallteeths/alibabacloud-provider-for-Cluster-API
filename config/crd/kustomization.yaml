@@ -16,6 +16,7 @@ resources:
 - bases/infrastructure.cluster.x-k8s.io_aliyunmachines.yaml
 - bases/infrastructure.cluster.x-k8s.io_aliyunmachinetemplates.yaml
 - bases/alicloud.alibabacloud.com_instances.yaml
+- bases/infrastructure.cluster.x-k8s.io_aliyunclusters.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patches:

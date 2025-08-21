@@ -40,9 +40,9 @@ import (
 	features "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/features"
 )
 
-// +kubebuilder:rbac:groups=nlb.alibabacloud.com,resources=loadbalancers;listeners;servergroups,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=nlb.alibabacloud.com,resources=loadbalancers/status;listeners/status;servergroups/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=nlb.alibabacloud.com,resources=loadbalancers/finalizers;listeners/finalizers;servergroups/finalizers,verbs=update
+// +kubebuilder:rbac:groups=alicloud.alibabacloud.com,resources=instances;listeners;servergroups,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=alicloud.alibabacloud.com,resources=instances/status;listeners/status;servergroups/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=alicloud.alibabacloud.com,resources=instances/finalizers;listeners/finalizers;servergroups/finalizers,verbs=update
 
 // Setup adds a controller that reconciles Instance managed resources.
 func Setup(mgr ctrl.Manager, o tjcontroller.Options) error {

@@ -48,9 +48,6 @@ const (
 
 //+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machines,verbs=get;list;watch
 
-//+kubebuilder:rbac:groups=ecs.alibabacloud.crossplane.io,resources=instances,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=ecs.alibabacloud.crossplane.io,resources=instances/status,verbs=get;update;patch
-
 type AliyunMachineReconciler struct {
 	client.Client
 	Scheme           *runtime.Scheme

@@ -16,14 +16,18 @@
 package infrastructure
 
 import (
+	"fmt"
 	ecsv1alpha1 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/ecs/v1alpha1"
 	essv1alpha1 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/ess/v1alpha1"
+	nlbv1alpha1 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/nlb/v1alpha1"
 	ess20220222 "github.com/alibabacloud-go/ess-20220222/v2/client"
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net"
 	"reflect"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sort"
+	"strings"
 )
 
 // getOwnerMachinePool 查询目标资源 obj (aliyunPool)的 MachinePool 属主并返回.
@@ -80,6 +84,18 @@ func stringSlicePtrEqual(a, b []*string) bool {
 	}
 	for _, v := range set {
 		if v != 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func stringSliceEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
 			return false
 		}
 	}
@@ -287,6 +303,44 @@ func equalInstanceForProviderSoft(a, b ecsv1alpha1.InstanceParameters) bool {
 		floatPtrEq(a.InternetMaxBandwidthIn, b.InternetMaxBandwidthIn)
 }
 
+func zvKey(z nlbv1alpha1.ZoneMappingsParameters) string {
+	var zid, vsw string
+	if z.ZoneID != nil {
+		zid = strings.TrimSpace(*z.ZoneID)
+	}
+	if z.VswitchID != nil {
+		vsw = strings.TrimSpace(*z.VswitchID)
+	}
+	return zid + "|" + vsw
+}
+
+func canonKeys(in []nlbv1alpha1.ZoneMappingsParameters) []string {
+	keys := make([]string, 0, len(in))
+	for _, z := range in {
+		keys = append(keys, zvKey(z))
+	}
+	sort.Strings(keys) // 忽略顺序
+	return keys
+}
+
+func zoneMappingsEqualByZoneAndVSwitch(a, b []nlbv1alpha1.ZoneMappingsParameters) bool {
+	ak := canonKeys(a)
+	bk := canonKeys(b)
+	if len(ak) != len(bk) {
+		return false
+	}
+	for i := range ak {
+		if ak[i] != bk[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func equalNlbForProviderSoft(a, b nlbv1alpha1.LoadBalancerParameters) bool {
+	return zoneMappingsEqualByZoneAndVSwitch(a.ZoneMappings, b.ZoneMappings)
+}
+
 // 不可以更换的的参数
 func hasHardImmutableDiff(a, b ecsv1alpha1.InstanceParameters) bool {
 	aa, bb := a, b
@@ -386,4 +440,19 @@ func collectAddresses(inst *ecsv1alpha1.Instance) []clusterv1.MachineAddress {
 	}
 
 	return out
+}
+
+func toPort(s string) (float64, error) {
+	var p int
+	_, err := fmt.Sscanf(strings.TrimSpace(s), "%d", &p)
+	return float64(p), err
+}
+
+func firstNonEmpty(ss ...string) string {
+	for _, s := range ss {
+		if strings.TrimSpace(s) != "" {
+			return strings.TrimSpace(s)
+		}
+	}
+	return ""
 }

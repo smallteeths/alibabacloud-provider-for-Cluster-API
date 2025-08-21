@@ -18,6 +18,7 @@ package v1beta2
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -25,20 +26,43 @@ import (
 
 // AliyunClusterSpec defines the desired state of AliyunCluster
 type AliyunClusterSpec struct {
+	ExistingNLBDNS string `json:"existingNLBDNS,omitempty"`
+	ExistingNLBID  string `json:"existingNLBID,omitempty"`
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	// The following markers will use OpenAPI v3 schema to validate the value
 	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
+	Port         int32          `json:"port,omitempty"`
+	RegionID     string         `json:"regionId"`
+	AddressType  string         `json:"addressType"`
+	VpcId        string         `json:"vpcId"`
+	ZoneMappings []ZoneMappings `json:"ZoneMappings,omitempty"`
+	Listeners    []Listeners    `json:"Listeners,omitempty"`
+}
 
-	// foo is an example field of AliyunCluster. Edit aliyuncluster_types.go to remove/update
-	// +optional
-	Foo *string `json:"foo,omitempty"`
+type ZoneMappings struct {
+	VSwitchId string `json:"vSwitchId"`
+	ZoneId    string `json:"zoneId"`
+}
+
+type Listeners struct {
+	ListenerProtocol string `json:"listenerProtocol"`
+	ListenerPort     string `json:"listenerPort"`
+	LoadBalancerId   string `json:"loadBalancerId"`
+	ServerGroupId    string `json:"serverGroupId""`
+	VpcId            string `json:"vpcId"`
 }
 
 // AliyunClusterStatus defines the observed state of AliyunCluster.
 type AliyunClusterStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// +optional
+	NlbID string `json:"nlbId,omitempty"`
+	// +optional
+	NlbDNS string `json:"nlbDns,omitempty"`
+	// +optional
+	ServerGroupIDs []string `json:"serverGroupIds,omitempty"`
+	// +optional
+	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true

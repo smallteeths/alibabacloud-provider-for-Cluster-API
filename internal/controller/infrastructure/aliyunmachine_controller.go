@@ -111,9 +111,10 @@ func (r *AliyunMachineReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		// 仅在“软字段”变化时 patch
 		if !equalInstanceForProviderSoft(cur.Spec.ForProvider, want.Spec.ForProvider) {
 			// 这里只更新可以更改的参数
+			orig := cur.DeepCopy()
 			mergeSoftFields(&cur.Spec.ForProvider, &want.Spec.ForProvider)
 
-			if err := r.Client.Patch(ctx, cur, client.MergeFrom(cur.DeepCopy())); err != nil {
+			if err := r.Client.Patch(ctx, cur, client.MergeFrom(orig)); err != nil {
 				return ctrl.Result{}, err
 			}
 			log.Info("Patched ECS Instance (soft fields)", "name", instName)
@@ -152,17 +153,6 @@ func (r *AliyunMachineReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	// 更新 spec/metadata（比如 Finalizers、Spec 字段）
 	if err := r.Client.Update(ctx, am); err != nil {
 		return ctrl.Result{}, err
-	}
-
-	var addrs []clusterv1.MachineAddress
-	if v := inst.Status.AtProvider.PrimaryIPAddress; v != nil && *v != "" {
-		addrs = append(addrs, clusterv1.MachineAddress{Type: clusterv1.MachineInternalIP, Address: *v})
-	}
-	if v := inst.Status.AtProvider.PublicIP; v != nil && *v != "" {
-		addrs = append(addrs, clusterv1.MachineAddress{Type: clusterv1.MachineExternalIP, Address: *v})
-	}
-	if len(addrs) > 0 {
-		am.Status.Addresses = addrs
 	}
 
 	am.Status.Addresses = collectAddresses(inst)

@@ -4,9 +4,10 @@ metadata:
   name: rke2-aliyun-demo
   namespace: default
 spec:
-  controlPlaneEndpoint:
-    host: nlb-pzux801sg2bd6abio8.cn-hongkong.nlb.aliyuncsslbintl.com
-    port: 6443
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+    kind: AliyunCluster
+    name: rke2-aliyun-demo
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: RKE2ControlPlane

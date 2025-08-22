@@ -68,6 +68,38 @@ rules:
   - patch
   - update
 - apiGroups:
+  - alicloud.alibabacloud.com
+  resources:
+  - instances
+  - listeners
+  - servergroups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - alicloud.alibabacloud.com
+  resources:
+  - instances/finalizers
+  - listeners/finalizers
+  - servergroups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - alicloud.alibabacloud.com
+  resources:
+  - instances/status
+  - listeners/status
+  - servergroups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - cluster.x-k8s.io
   resources:
   - clusters
@@ -258,9 +290,9 @@ rules:
   - patch
   - update
 - apiGroups:
-  - ecs.alibabacloud.crossplane.io
+  - infrastructure.cluster.x-k8s.io
   resources:
-  - instances
+  - aliyunclusters
   verbs:
   - create
   - delete
@@ -270,9 +302,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - ecs.alibabacloud.crossplane.io
+  - infrastructure.cluster.x-k8s.io
   resources:
-  - instances/status
+  - aliyunclusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - aliyunclusters/status
   verbs:
   - get
   - patch
@@ -332,6 +370,32 @@ rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
+  - aliyunmachinetemplates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - aliyunmachinetemplates/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - aliyunmachinetemplates/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
   - aliyunmanagedclusters
   verbs:
   - create
@@ -377,6 +441,38 @@ rules:
   - infrastructure.cluster.x-k8s.io
   resources:
   - aliyunmanagedmachinepools/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - nlb.alibabacloud.com
+  resources:
+  - listeners
+  - loadbalancers
+  - servergroups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - nlb.alibabacloud.com
+  resources:
+  - listeners/finalizers
+  - loadbalancers/finalizers
+  - servergroups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - nlb.alibabacloud.com
+  resources:
+  - listeners/status
+  - loadbalancers/status
+  - servergroups/status
   verbs:
   - get
   - patch

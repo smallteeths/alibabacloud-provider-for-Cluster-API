@@ -133,7 +133,7 @@ type AliyunMachineSpec struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=aliyunmachinetemplates,scope=Namespaced,shortName=alimp;alimpctl,categories=cluster-api
+// +kubebuilder:resource:path=aliyunmachinetemplates,scope=Namespaced,shortName=alimpctl,categories=cluster-api
 // +kubebuilder:printcolumn:name="INSTANCE",type=string,JSONPath=".spec.template.spec.instanceType",priority=0
 // +kubebuilder:printcolumn:name="VSWITCH",type=string,JSONPath=".spec.template.spec.vSwitchId",priority=1
 // +kubebuilder:printcolumn:name="REGION",type=string,JSONPath=".spec.template.spec.regionId",priority=1

@@ -16,6 +16,10 @@ resources:
 - bases/infrastructure.cluster.x-k8s.io_aliyunmachines.yaml
 - bases/infrastructure.cluster.x-k8s.io_aliyunmachinetemplates.yaml
 - bases/alicloud.alibabacloud.com_instances.yaml
+- bases/infrastructure.cluster.x-k8s.io_aliyunclusters.yaml
+- bases/nlb.alibabacloud.com_listeners.yaml
+- bases/nlb.alibabacloud.com_loadbalancers.yaml
+- bases/nlb.alibabacloud.com_servergroups.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patches:
@@ -51,6 +55,7 @@ patches:
 - path: patches/capi_in_infrastructure_aliyunmanagedclusters.yaml
 - path: patches/capi_in_infrastructure_aliyunmachines.yaml
 - path: patches/capi_in_infrastructure_aliyunmachinetemplates.yaml
+- path: patches/capi_in_infrastructure_aliyunclusters.yaml
 
 configurations:
 - kustomizeconfig.yaml

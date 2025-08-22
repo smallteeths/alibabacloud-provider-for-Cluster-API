@@ -4,13 +4,40 @@ metadata:
   name: rke2-aliyun-demo
   namespace: default
 spec:
-  controlPlaneEndpoint:
-    host: nlb-pzux801sg2bd6abio8.cn-hongkong.nlb.aliyuncsslbintl.com
-    port: 6443
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+    kind: AliyunCluster
+    name: rke2-aliyun-demo
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: RKE2ControlPlane
     name: rke2-aliyun-cp
+
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: AliyunCluster
+metadata:
+  name: rke2-aliyun-demo
+  namespace: default
+  labels:
+    cluster.x-k8s.io/cluster-name: rke2-aliyun-demo
+spec:
+  regionId:     cn-hongkong
+  addressType:  Internet
+  vpcId:        vpc-j6ctujlcrgdper58tctny
+  port:         6443
+  ZoneMappings:
+    - vSwitchId: vsw-j6c0s3mgm8izzos9p6ub4
+      zoneId:    cn-hongkong-b
+    - vSwitchId: vsw-j6cagk6qk7nj807k6akvl
+      zoneId:    cn-hongkong-d
+  Listeners:
+    - listenerProtocol: TCP
+      listenerPort:     "6443"
+      vpcId:            vpc-j6ctujlcrgdper58tctny
+    - listenerProtocol: TCP
+      listenerPort:     "9345"
+      vpcId:            vpc-j6ctujlcrgdper58tctny
 
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta2

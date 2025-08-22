@@ -25,6 +25,16 @@ import (
 )
 
 // GetConditions returns the observations of the operational state of the AliyunMachinePool resource.
+func (r *AliyunCluster) GetConditions() clusterv1.Conditions {
+	return r.Status.Conditions
+}
+
+// SetConditions sets the underlying service state of the AliyunMachinePool to the predescribed clusterv1.Conditions.
+func (r *AliyunCluster) SetConditions(conditions clusterv1.Conditions) {
+	r.Status.Conditions = conditions
+}
+
+// GetConditions returns the observations of the operational state of the AliyunMachinePool resource.
 func (r *AliyunMachine) GetConditions() clusterv1.Conditions {
 	return r.Status.Conditions
 }

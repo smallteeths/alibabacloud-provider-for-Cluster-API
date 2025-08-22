@@ -20,8 +20,3 @@ resources:
 # default, aiding admins in cluster management. Those roles are
 # not used by the cluster-api-provider-aliyun itself. You can comment the following lines
 # if you do not want those helpers be installed with your Project.
-- infrastructure_aliyunmachinepool_admin_role.yaml
-- infrastructure_aliyunmachinepool_editor_role.yaml
-- infrastructure_aliyunmachinepool_viewer_role.yaml
-- aliyunmachine_role.yaml
-

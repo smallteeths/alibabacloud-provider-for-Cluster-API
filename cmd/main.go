@@ -52,12 +52,18 @@ import (
 	alibabacloudv1alpha1 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/alibabacloud/v1alpha1"
 	alibabacloudv1beta1 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/alibabacloud/v1beta1"
 	csv1alpha1 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/cs/v1alpha1"
+	ecsv1alpha1 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/ecs/v1alpha1"
+	nlbv1alpha1 "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/api/nlb/v1alpha1"
 	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/clients"
 	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/config"
 	kubernetesnodepoolcontroller "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/cs/kubernetesnodepool"
 	managedkubernetescontroller "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/cs/managedkubernetes"
 	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/cs/vpc"
 	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/cs/vswitch"
+	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/ecs/instance"
+	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/nlb/listener"
+	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/nlb/loadbalancer"
+	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/nlb/servergroup"
 	providerconfigcontroller "github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/controller/providerconfig"
 	"github.com/AliyunContainerService/alibabacloud-provider-for-Cluster-API/internal/features"
 
@@ -82,6 +88,8 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 
 	utilruntime.Must(csv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(ecsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(nlbv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(alibabacloudv1alpha1.SchemeBuilder.AddToScheme(scheme))
 	utilruntime.Must(alibabacloudv1beta1.SchemeBuilder.AddToScheme(scheme))
 	utilruntime.Must(clusterv1.AddToScheme(scheme))
@@ -273,6 +281,28 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err = (&infrastructurev1beta2.AliyunMachineTemplate{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "AliyunMachineTemplate")
+			os.Exit(1)
+		}
+	}
+	if err = (&infrastructurecontroller.AliyunMachineReconciler{
+		Client:           mgr.GetClient(),
+		Scheme:           mgr.GetScheme(),
+		CredentialSecret: credentialSecret,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AliyunCluster")
+		os.Exit(1)
+	}
+	if err := (&infrastructurecontroller.AliyunClusterReconciler{
+		Client:           mgr.GetClient(),
+		Scheme:           mgr.GetScheme(),
+		CredentialSecret: credentialSecret,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AliyunCluster")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	// upjet
@@ -361,7 +391,27 @@ func main() {
 		providerLog.Info("failed to setup providerconfig controller", "error", err)
 		os.Exit(1)
 	}
-
+	// 同步 upjet instance/listener/loadbalancer/servergroup controller
+	// servergroup 用来为 nlb 创建后端监听服务器组 （控制平面节点会加入到这个服务器组中）
+	// listener 用来为 nlb 创建监听器 （暴露监听的端口，用来与 worker 节点通信）
+	// instance 创建 machine 对应的 ecs 实例
+	// loadbalancer 用来创建 nlb
+	if err := instance.Setup(mgr, o); err != nil {
+		providerLog.Info("failed to setup aliyun instance controller", "error", err)
+		os.Exit(1)
+	}
+	if err := listener.Setup(mgr, o); err != nil {
+		providerLog.Info("failed to setup aliyun listener controller", "error", err)
+		os.Exit(1)
+	}
+	if err := loadbalancer.Setup(mgr, o); err != nil {
+		providerLog.Info("failed to setup aliyun loadbalancer controller", "error", err)
+		os.Exit(1)
+	}
+	if err := servergroup.Setup(mgr, o); err != nil {
+		providerLog.Info("failed to setup aliyun servergroup controller", "error", err)
+		os.Exit(1)
+	}
 	// upjet end
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

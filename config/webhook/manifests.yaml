@@ -30,9 +30,9 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-infrastructure-cluster-x-k8s-io-v1beta2-aliyunmanagedmachinepool
+      path: /mutate-infrastructure-cluster-x-k8s-io-v1beta2-aliyunmachinetemplate
   failurePolicy: Fail
-  name: maliyunmanagedmachinepool.kb.io
+  name: maliyunmachinetemplate-v1beta2-msy.kb.io
   rules:
   - apiGroups:
     - infrastructure.cluster.x-k8s.io
@@ -42,7 +42,7 @@ webhooks:
     - CREATE
     - UPDATE
     resources:
-    - aliyunmanagedmachinepools
+    - aliyunmachinetemplates
   sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
@@ -76,17 +76,17 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-infrastructure-cluster-x-k8s-io-v1beta2-aliyunmanagedmachinepool
+      path: /validate-infrastructure-cluster-x-k8s-io-v1beta2-aliyunmachinetemplate
   failurePolicy: Fail
-  name: valiyunmanagedmachinepool.kb.io
+  name: valiyunmachinetemplate-v1beta2-msy.kb.io
   rules:
   - apiGroups:
-    - infrastructure.cluster.x-k8s.io
+    - infrastructure.cluster.x-k8s-io
     apiVersions:
     - v1beta2
     operations:
     - CREATE
     - UPDATE
     resources:
-    - aliyunmanagedmachinepools
+    - aliyunmachinetemplates
   sideEffects: None

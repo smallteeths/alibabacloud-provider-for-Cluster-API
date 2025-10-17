@@ -46,7 +46,7 @@ func (r *AliyunManagedMachinePool) SetupWebhookWithManager(mgr ctrl.Manager) err
 
 // TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-//+kubebuilder:webhook:path=/mutate-infrastructure-cluster-x-k8s-io-v1beta2-aliyunmanagedmachinepool,mutating=true,failurePolicy=fail,sideEffects=None,groups=infrastructure.cluster.x-k8s.io,resources=aliyunmanagedmachinepools,verbs=create;update,versions=v1beta2,name=maliyunmanagedmachinepool.kb.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-infrastructure-cluster-x-k8s-io-v1beta2-aliyunmachinetemplate,mutating=true,failurePolicy=fail,sideEffects=None,groups=infrastructure.cluster.x-k8s.io,resources=aliyunmachinetemplates,verbs=create;update,versions=v1beta2,name=maliyunmachinetemplate-v1beta2-msy.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &AliyunManagedMachinePool{}
 
@@ -99,7 +99,7 @@ func (r *AliyunManagedMachinePool) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-infrastructure-cluster-x-k8s-io-v1beta2-aliyunmanagedmachinepool,mutating=false,failurePolicy=fail,sideEffects=None,groups=infrastructure.cluster.x-k8s.io,resources=aliyunmanagedmachinepools,verbs=create;update,versions=v1beta2,name=valiyunmanagedmachinepool.kb.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-infrastructure-cluster-x-k8s-io-v1beta2-aliyunmachinetemplate,mutating=false,failurePolicy=fail,sideEffects=None,groups=infrastructure.cluster.x-k8s-io,resources=aliyunmachinetemplates,verbs=create;update,versions=v1beta2,name=valiyunmachinetemplate-v1beta2-msy.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &AliyunManagedMachinePool{}
 
